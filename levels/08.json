@@ -1,0 +1,23 @@
+{
+  "id": 8,
+  "night": "Ночь 08",
+  "name": "Чаша с росой",
+  "line": "Лейка один раз за ночь снимает одну фишку или слой инея. Береги её для толстого стекла.",
+  "rows": 8,
+  "cols": 8,
+  "types": ["fern", "beetle", "moss", "pearl", "vine"],
+  "moves": 32,
+  "goals": [
+    { "kind": "collect", "tile": "vine", "count": 14 },
+    { "kind": "collect", "tile": "fern", "count": 12 },
+    { "kind": "glass", "count": 6 }
+  ],
+  "glass": [
+    { "r": 3, "c": 2, "hp": 2 },
+    { "r": 3, "c": 3, "hp": 2 },
+    { "r": 3, "c": 4, "hp": 2 },
+    { "r": 4, "c": 3, "hp": 2 },
+    { "r": 5, "c": 5, "hp": 1 },
+    { "r": 6, "c": 1, "hp": 1 }
+  ]
+}

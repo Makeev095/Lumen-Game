@@ -1,0 +1,22 @@
+{
+  "id": 4,
+  "night": "Ночь 04",
+  "name": "Винтики",
+  "line": "Квадрат из четырёх одинаковых оставляет вертолёт. Он улетает в иней или в то, что ещё нужно собрать.",
+  "rows": 8,
+  "cols": 8,
+  "types": ["fern", "beetle", "moss", "pearl", "vine"],
+  "moves": 30,
+  "goals": [
+    { "kind": "collect", "tile": "beetle", "count": 14 },
+    { "kind": "collect", "tile": "moss", "count": 12 },
+    { "kind": "glass", "count": 5 }
+  ],
+  "glass": [
+    { "r": 1, "c": 3, "hp": 1 },
+    { "r": 2, "c": 5, "hp": 1 },
+    { "r": 4, "c": 2, "hp": 1 },
+    { "r": 5, "c": 5, "hp": 1 },
+    { "r": 6, "c": 3, "hp": 1 }
+  ]
+}

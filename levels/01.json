@@ -1,0 +1,12 @@
+{
+  "id": 1,
+  "night": "Ночь 01",
+  "name": "Первый фонарь",
+  "line": "Папоротник — высокий зелёный лист. Собери его, и над садом зажжётся лампа.",
+  "rows": 8,
+  "cols": 8,
+  "types": ["fern", "beetle", "moss", "pearl"],
+  "moves": 26,
+  "goals": [{ "kind": "collect", "tile": "fern", "count": 12 }],
+  "glass": []
+}

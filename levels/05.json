@@ -1,0 +1,21 @@
+{
+  "id": 5,
+  "night": "Ночь 05",
+  "name": "Радужная призма",
+  "line": "Пять в ряд собирают радужный шар. Поменяй его с фишкой — он снимет весь этот цвет.",
+  "rows": 8,
+  "cols": 8,
+  "types": ["fern", "beetle", "moss", "pearl", "vine"],
+  "moves": 30,
+  "goals": [
+    { "kind": "collect", "tile": "pearl", "count": 12 },
+    { "kind": "collect", "tile": "vine", "count": 12 },
+    { "kind": "glass", "count": 4 }
+  ],
+  "glass": [
+    { "r": 2, "c": 2, "hp": 1 },
+    { "r": 2, "c": 5, "hp": 1 },
+    { "r": 5, "c": 2, "hp": 1 },
+    { "r": 5, "c": 5, "hp": 1 }
+  ]
+}

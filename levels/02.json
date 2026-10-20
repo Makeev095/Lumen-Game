@@ -1,0 +1,21 @@
+{
+  "id": 2,
+  "night": "Ночь 02",
+  "name": "Иней на стекле",
+  "line": "Жук — янтарный, с усиками. Жемчуг — круглая розовая капля. Иней — ледяная сосулька: его сбивают рядом.",
+  "rows": 8,
+  "cols": 8,
+  "types": ["fern", "beetle", "moss", "pearl", "vine"],
+  "moves": 28,
+  "goals": [
+    { "kind": "collect", "tile": "pearl", "count": 12 },
+    { "kind": "collect", "tile": "beetle", "count": 12 },
+    { "kind": "glass", "count": 4 }
+  ],
+  "glass": [
+    { "r": 3, "c": 3, "hp": 1 },
+    { "r": 3, "c": 4, "hp": 1 },
+    { "r": 4, "c": 3, "hp": 1 },
+    { "r": 4, "c": 4, "hp": 1 }
+  ]
+}

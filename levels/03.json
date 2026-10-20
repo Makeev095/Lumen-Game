@@ -1,0 +1,21 @@
+{
+  "id": 3,
+  "night": "Ночь 03",
+  "name": "Тёплый настил",
+  "line": "Мох низкий и пушистый, лоза тянется наискосок. Четыре в ряд оставляют луч, квадрат — вертолёт.",
+  "rows": 8,
+  "cols": 8,
+  "types": ["fern", "beetle", "moss", "pearl", "vine"],
+  "moves": 28,
+  "goals": [
+    { "kind": "collect", "tile": "moss", "count": 10 },
+    { "kind": "collect", "tile": "vine", "count": 10 },
+    { "kind": "glass", "count": 4 }
+  ],
+  "glass": [
+    { "r": 2, "c": 3, "hp": 1 },
+    { "r": 3, "c": 2, "hp": 1 },
+    { "r": 3, "c": 5, "hp": 1 },
+    { "r": 5, "c": 4, "hp": 1 }
+  ]
+}
