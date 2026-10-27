@@ -40,7 +40,11 @@ var next_button: Button
 var reward_button: Button
 var again_button: Button
 var home_button: Button
+var shop_button: Button
+var shop_box: VBoxContainer
 var water_button: Button
+var _shop_from := ""
+var _buying := false
 var overlay_goals: HFlowContainer
 var star_row: HBoxContainer
 var awaiting_start := false
@@ -67,6 +71,10 @@ func _ready() -> void:
 	_build_menu()
 	_build_game()
 	_apply_static_copy(self)
+	Yandex.purchase_resolved.connect(_on_purchase)
+	Yandex.catalog_changed.connect(_on_catalog)
+	Yandex.progress_changed.connect(_on_progress)
+	Yandex.mark_listener_ready()
 	_show_menu()
 	resized.connect(_fit_screen)
 	get_viewport().size_changed.connect(_fit_screen)
@@ -88,9 +96,10 @@ func _build_menu() -> void:
 	eyebrow.add_theme_font_override("font", display_font)
 	eyebrow.set_meta("display", true)
 	menu.add_child(eyebrow)
-	menu_title = _label("Люмен", 92, Color("1d4a32"))
+	menu_title = _label("", 92, Color("1d4a32"))
 	menu_title.add_theme_font_override("font", display_font)
 	menu_title.set_meta("display", true)
+	menu_title.set_meta("copy", "title")
 	menu.add_child(menu_title)
 	var story := _label("", 20, Color("4a3424"))
 	story.set_meta("copy", "home_story")
@@ -114,6 +123,14 @@ func _build_menu() -> void:
 	continue_button = _button("", true)
 	continue_button.pressed.connect(_continue)
 	menu.add_child(continue_button)
+	var help := _button("", false)
+	help.set_meta("copy", "how")
+	help.pressed.connect(_show_how)
+	menu.add_child(help)
+	var shop := _button("", true)
+	shop.set_meta("copy", "shop")
+	shop.pressed.connect(_open_shop)
+	menu.add_child(shop)
 	_refresh_home()
 
 
@@ -169,8 +186,12 @@ func _build_game() -> void:
 	retry.pressed.connect(func() -> void: start_level(level_index))
 	water_button = _button("", false)
 	water_button.pressed.connect(_arm_water)
+	var help := _button("", false)
+	help.set_meta("copy", "how")
+	help.pressed.connect(_show_how)
 	row.add_child(back)
 	row.add_child(water_button)
+	row.add_child(help)
 	row.add_child(retry)
 	game.add_child(row)
 
@@ -241,8 +262,16 @@ func _build_game() -> void:
 	home_button = _button("", false)
 	home_button.set_meta("copy", "garden")
 	home_button.pressed.connect(_show_menu)
+	shop_box = VBoxContainer.new()
+	shop_box.add_theme_constant_override("separation", 10)
+	shop_box.visible = false
+	card.add_child(shop_box)
+	shop_button = _button("", true)
+	shop_button.set_meta("copy", "shop")
+	shop_button.pressed.connect(_open_shop)
 	actions.add_child(next_button)
 	actions.add_child(reward_button)
+	actions.add_child(shop_button)
 	actions.add_child(again_button)
 	actions.add_child(home_button)
 	card.add_child(actions)
@@ -252,13 +281,14 @@ func start_level(index: int) -> void:
 	level_index = index
 	busy = false
 	watering = false
-	water_left = 1
+	water_left = 1 + Yandex.take_cans()
 	_update_water_button()
 	menu_host.visible = false
 	game_host.visible = true
 	var level := _read_level(index)
 	_localize_level(level)
 	model.setup(level)
+	model.grant_moves(Yandex.take_moves())
 	board.build(model.grid)
 	_fit_screen()
 	_show_hud(model.hud())
@@ -422,8 +452,10 @@ func _show_goal_card() -> void:
 	next_button.visible = true
 	next_button.text = Locale.line("start")
 	reward_button.visible = false
+	shop_button.visible = false
 	again_button.visible = false
 	home_button.visible = false
+	shop_box.visible = false
 	_present_overlay()
 
 
@@ -477,6 +509,8 @@ func _finish(won: bool) -> void:
 	next_button.text = Locale.line("onward")
 	next_button.visible = won and level_index < Catalog.COUNT - 1
 	reward_button.visible = not won
+	shop_button.visible = not won
+	shop_box.visible = false
 	_drop_children(overlay_goals)
 	if won:
 		var lamps := _earned_stars()
@@ -514,7 +548,187 @@ func _fill_lose_card() -> void:
 	overlay_body.text = Locale.line("almost_ad") if close else Locale.line("out_ad")
 
 
+func _show_how() -> void:
+	card_mode = "how"
+	overlay_title.text = Locale.line("how_title")
+	overlay_body.text = Locale.line("how_body")
+	_drop_children(overlay_goals)
+	_paint_stars(0)
+	next_button.visible = true
+	next_button.text = Locale.line("how_ok")
+	reward_button.visible = false
+	shop_button.visible = false
+	again_button.visible = false
+	home_button.visible = false
+	shop_box.visible = false
+	_present_overlay()
+
+
+func _open_shop() -> void:
+	_shop_from = card_mode
+	card_mode = "shop"
+	overlay_title.text = Locale.line("shop_title")
+	overlay_body.text = ""
+	_drop_children(overlay_goals)
+	_paint_stars(0)
+	next_button.visible = true
+	next_button.text = Locale.line("shop_close")
+	reward_button.visible = false
+	shop_button.visible = false
+	again_button.visible = false
+	home_button.visible = false
+	shop_box.visible = true
+	_fill_shop()
+	_present_overlay()
+	Yandex.refresh_catalog()
+
+
+func _close_shop() -> void:
+	shop_box.visible = false
+	var back := _shop_from
+	_shop_from = ""
+	if back == "lose":
+		card_mode = "lose"
+		again_button.visible = true
+		home_button.visible = true
+		reward_button.visible = true
+		shop_button.visible = true
+		next_button.visible = false
+		_fill_lose_card()
+		_present_overlay()
+		return
+	card_mode = ""
+	overlay.visible = false
+
+
+func _fill_shop() -> void:
+	if shop_box == null:
+		return
+	_drop_children(shop_box)
+	var rows: Array = Yandex.catalog
+	if rows.is_empty():
+		rows = Yandex._editor_catalog()
+	for item in rows:
+		if not (item is Dictionary):
+			continue
+		var product_id := str(item.get("id", ""))
+		if not Yandex.PRODUCTS.has(product_id):
+			continue
+		var block := VBoxContainer.new()
+		block.add_theme_constant_override("separation", 4)
+		var title := _label(_product_title(product_id, item), 28, Color("1d4a32"))
+		title.add_theme_font_override("font", display_font)
+		title.set_meta("display", true)
+		var about := _label(_product_body(product_id, item), 20, Color("4a3424"))
+		var buy := _button(_product_price(product_id, item), true)
+		if product_id == "quiet" and Yandex.ads_off:
+			buy.text = Locale.line("shop_owned")
+			buy.disabled = true
+		elif _buying:
+			buy.disabled = true
+		else:
+			buy.pressed.connect(_buy_product.bind(product_id))
+		block.add_child(title)
+		block.add_child(about)
+		block.add_child(buy)
+		shop_box.add_child(block)
+
+
+func _product_title(product_id: String, item: Dictionary) -> String:
+	var remote := str(item.get("title", ""))
+	if remote != "":
+		return remote
+	return Locale.line("prod_" + product_id)
+
+
+func _product_body(product_id: String, item: Dictionary) -> String:
+	var remote := str(item.get("description", ""))
+	if remote != "":
+		return remote
+	return Locale.line("prod_" + product_id + "_body")
+
+
+func _product_price(product_id: String, item: Dictionary) -> String:
+	var remote := str(item.get("price", ""))
+	if remote != "":
+		return remote
+	return Locale.line("prod_" + product_id)
+
+
+func _buy_product(product_id: String) -> void:
+	if _buying:
+		return
+	_buying = true
+	_fill_shop()
+	Yandex.buy(product_id)
+
+
+func _on_catalog() -> void:
+	if card_mode == "shop":
+		_fill_shop()
+		_fit_screen()
+
+
+func _on_progress() -> void:
+	if menu_host != null and menu_host.visible and not overlay.visible:
+		_refresh_home()
+
+
+func _on_purchase(product_id: String, ok: bool, token: String, consumable: bool) -> void:
+	_buying = false
+	if not ok:
+		if card_mode == "shop":
+			overlay_body.text = Locale.line("shop_fail")
+			_fill_shop()
+		return
+	_apply_purchase(product_id)
+	if consumable:
+		Yandex.seal(token)
+	if product_id == "quiet":
+		if card_mode == "shop":
+			_fill_shop()
+		return
+	if game_host != null and game_host.visible:
+		shop_box.visible = false
+		card_mode = ""
+		_shop_from = ""
+		overlay.visible = false
+		busy = false
+		_show_hud(model.hud())
+		return
+	if card_mode == "shop":
+		overlay_body.text = Locale.line("shop_later")
+		_fill_shop()
+
+
+func _apply_purchase(product_id: String) -> void:
+	var live := game_host != null and game_host.visible and model != null and card_mode != "win"
+	if product_id == "moves5":
+		if live:
+			model.grant_moves(5)
+			if model.valid_moves().is_empty():
+				model.shuffle_tiles()
+				board.build(model.grid)
+		else:
+			Yandex.bank_moves(5)
+	elif product_id == "can":
+		if live:
+			water_left += 1
+			_update_water_button()
+		else:
+			Yandex.bank_cans(1)
+	elif product_id == "quiet":
+		pass
+
+
 func _on_next() -> void:
+	if card_mode == "shop":
+		_close_shop()
+		return
+	if card_mode == "how":
+		card_mode = ""
+		overlay.visible = false
+		return
 	if awaiting_start:
 		awaiting_start = false
 		overlay.visible = false
@@ -688,6 +902,14 @@ func _on_language(_code: String) -> void:
 		_fill_win_card()
 	elif card_mode == "lose":
 		_fill_lose_card()
+	elif card_mode == "how":
+		overlay_title.text = Locale.line("how_title")
+		overlay_body.text = Locale.line("how_body")
+		next_button.text = Locale.line("how_ok")
+	elif card_mode == "shop":
+		overlay_title.text = Locale.line("shop_title")
+		next_button.text = Locale.line("shop_close")
+		_fill_shop()
 	_fit_screen()
 
 
@@ -829,6 +1051,8 @@ func _control_height(node: Control, width: float) -> float:
 		return (node as Label).get_combined_minimum_size().y
 	if node is HFlowContainer:
 		return _flow_height(node as HFlowContainer, width)
+	if node is VBoxContainer:
+		return _column_height(node as VBoxContainer, width)
 	return node.get_combined_minimum_size().y
 
 
